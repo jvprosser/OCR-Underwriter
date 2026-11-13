@@ -1,0 +1,1817 @@
+{
+  "flowContents": {
+    "identifier": "a6238006-1d18-43ee-86bd-267662a49ca2",
+    "instanceIdentifier": "ef4a1ed7-267d-44fc-bd9e-b614e8cd9d64",
+    "name": "PDF_OCR_Trino_SemanticSearch_Pipeline",
+    "comments": "Ingests multipage PDFs via HTTPS POST to OCR, routes structured fields to Trino, and indexes chunked free text into Trino and Cloudera Semantic Search.",
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "processGroups": [],
+    "remoteProcessGroups": [],
+    "processors": [
+      {
+        "identifier": "dc152e1e-aeb3-453d-9b59-aea7eb22b0f9",
+        "instanceIdentifier": "5413f8cb-4e37-4fad-8d85-6b7835875530",
+        "name": "1. Assign Document ID & Metadata",
+        "comments": "",
+        "position": {
+          "x": 400,
+          "y": 180
+        },
+        "type": "org.apache.nifi.processors.attributes.UpdateAttribute",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-update-attribute-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "document_id": "${UUID()}",
+          "ingest_timestamp": "${now():format(\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\")}",
+          "mime.type": "application/pdf",
+          "css.index.name": "#{CSS_INDEX_NAME}"
+        },
+        "propertyDescriptors": {
+          "document_id": {
+            "name": "document_id",
+            "displayName": "document_id",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": true
+          },
+          "ingest_timestamp": {
+            "name": "ingest_timestamp",
+            "displayName": "ingest_timestamp",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": true
+          },
+          "mime.type": {
+            "name": "mime.type",
+            "displayName": "mime.type",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": true
+          },
+          "css.index.name": {
+            "name": "css.index.name",
+            "displayName": "css.index.name",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": true
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+        "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf",
+        "name": "2. POST PDF to OCR Endpoint",
+        "comments": "",
+        "position": {
+          "x": 400,
+          "y": 360
+        },
+        "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "HTTP Method": "POST",
+          "Remote URL": "#{OCR_ENDPOINT_URL}",
+          "SSL Context Service": "7a5c5de4-df19-4582-a221-c1389eeff6e0",
+          "Content-Type": "application/pdf",
+          "Send Message Body": "true",
+          "Always Output Response": "false"
+        },
+        "propertyDescriptors": {
+          "HTTP Method": {
+            "name": "HTTP Method",
+            "displayName": "HTTP Method",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Remote URL": {
+            "name": "Remote URL",
+            "displayName": "Remote URL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "SSL Context Service": {
+            "name": "SSL Context Service",
+            "displayName": "SSL Context Service",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Content-Type": {
+            "name": "Content-Type",
+            "displayName": "Content-Type",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Send Message Body": {
+            "name": "Send Message Body",
+            "displayName": "Send Message Body",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Always Output Response": {
+            "name": "Always Output Response",
+            "displayName": "Always Output Response",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [
+          "Original"
+        ],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "5a5bedcb-8892-4e3d-a70b-355edb523057",
+        "instanceIdentifier": "4a47d09c-65d3-42e2-9b31-27c6afecf19b",
+        "name": "Retry OCR Requests",
+        "comments": "",
+        "position": {
+          "x": 920,
+          "y": 360
+        },
+        "type": "org.apache.nifi.processors.standard.RetryFlowFile",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Maximum Retries": "3",
+          "Penalty Duration": "15 sec",
+          "Fail on Non-numerical Overwrite": "false"
+        },
+        "propertyDescriptors": {
+          "Maximum Retries": {
+            "name": "Maximum Retries",
+            "displayName": "Maximum Retries",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Penalty Duration": {
+            "name": "Penalty Duration",
+            "displayName": "Penalty Duration",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Fail on Non-numerical Overwrite": {
+            "name": "Fail on Non-numerical Overwrite",
+            "displayName": "Fail on Non-numerical Overwrite",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "a8bac03f-8e2c-4828-9095-57071ba30665",
+        "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7",
+        "name": "Error & Dead Letter Sink",
+        "comments": "",
+        "position": {
+          "x": 920,
+          "y": 560
+        },
+        "type": "org.apache.nifi.processors.standard.LogAttribute",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Log Level": "error",
+          "Log prefix": "OCR_INGEST_ERROR"
+        },
+        "propertyDescriptors": {
+          "Log Level": {
+            "name": "Log Level",
+            "displayName": "Log Level",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Log prefix": {
+            "name": "Log prefix",
+            "displayName": "Log prefix",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [
+          "success"
+        ],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+        "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a",
+        "name": "3. Stamp Correlation Metadata",
+        "comments": "",
+        "position": {
+          "x": 400,
+          "y": 560
+        },
+        "type": "org.apache.nifi.processors.jolt.JoltTransformJSON",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-jolt-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Jolt Transformation DSL": "jolt-transform-default",
+          "Jolt Specification": "{\"document_id\": \"${document_id}\", \"source_filename\": \"${filename}\", \"ingest_timestamp\": \"${ingest_timestamp}\"}"
+        },
+        "propertyDescriptors": {
+          "Jolt Transformation DSL": {
+            "name": "Jolt Transformation DSL",
+            "displayName": "Jolt Transformation DSL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Jolt Specification": {
+            "name": "Jolt Specification",
+            "displayName": "Jolt Specification",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "ff94c6ed-0235-4650-a236-28f9712aa527",
+        "instanceIdentifier": "ddd3afac-2fbf-415b-8e69-8b584191a9ef",
+        "name": "4A. Flatten Form Fields Array",
+        "comments": "",
+        "position": {
+          "x": 40,
+          "y": 780
+        },
+        "type": "org.apache.nifi.processors.jolt.JoltTransformJSON",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-jolt-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Jolt Transformation DSL": "jolt-transform-chain",
+          "Jolt Specification": "[{\"operation\": \"shift\", \"spec\": {\"form_fields\": {\"*\": {\"@(2,document_id)\": \"[&1].document_id\", \"@(2,source_filename)\": \"[&1].source_filename\", \"@(2,ingest_timestamp)\": \"[&1].ingest_timestamp\", \"page_number\": \"[&1].page_number\", \"field_name\": \"[&1].field_name\", \"field_value\": \"[&1].field_value\", \"confidence\": \"[&1].confidence\"}}}}]"
+        },
+        "propertyDescriptors": {
+          "Jolt Transformation DSL": {
+            "name": "Jolt Transformation DSL",
+            "displayName": "Jolt Transformation DSL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Jolt Specification": {
+            "name": "Jolt Specification",
+            "displayName": "Jolt Specification",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "f8d47ff0-50f1-4b0b-bc36-b6335323917d",
+        "instanceIdentifier": "a4d2a770-9934-49a9-86b3-5b9cf9536d62",
+        "name": "5A. Insert Form Fields to Trino",
+        "comments": "",
+        "position": {
+          "x": 40,
+          "y": 980
+        },
+        "type": "org.apache.nifi.processors.standard.PutDatabaseRecord",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "put-db-record-record-reader": "9e4b3aac-93f1-4f64-b9ca-ffda98dd2dc2",
+          "put-db-record-statement-type": "INSERT",
+          "put-db-record-dcbp-service": "0e52f1d4-c911-4f26-84ae-cbc9fb1b965b",
+          "put-db-record-table-name": "#{TRINO_FORM_TABLE}",
+          "put-db-record-max-batch-size": "500"
+        },
+        "propertyDescriptors": {
+          "put-db-record-record-reader": {
+            "name": "put-db-record-record-reader",
+            "displayName": "Record Reader",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-statement-type": {
+            "name": "put-db-record-statement-type",
+            "displayName": "Statement Type",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-dcbp-service": {
+            "name": "put-db-record-dcbp-service",
+            "displayName": "Database Connection Pooling Service",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-table-name": {
+            "name": "put-db-record-table-name",
+            "displayName": "Table Name",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-max-batch-size": {
+            "name": "put-db-record-max-batch-size",
+            "displayName": "Maximum Batch Size",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [
+          "success"
+        ],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "ace3c944-a21f-4edc-9f42-4c247260b64c",
+        "instanceIdentifier": "09731016-5efb-4e4e-9ac6-7820ca6bbfe7",
+        "name": "4B1. Flatten Free Text Array",
+        "comments": "",
+        "position": {
+          "x": 400,
+          "y": 780
+        },
+        "type": "org.apache.nifi.processors.jolt.JoltTransformJSON",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-jolt-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Jolt Transformation DSL": "jolt-transform-chain",
+          "Jolt Specification": "[{\"operation\": \"shift\", \"spec\": {\"free_text_blocks\": {\"*\": {\"@(2,document_id)\": \"[&1].document_id\", \"@(2,source_filename)\": \"[&1].source_filename\", \"@(2,ingest_timestamp)\": \"[&1].ingest_timestamp\", \"page_number\": \"[&1].page_number\", \"section_heading\": \"[&1].section_heading\", \"text\": \"[&1].text_content\"}}}}]"
+        },
+        "propertyDescriptors": {
+          "Jolt Transformation DSL": {
+            "name": "Jolt Transformation DSL",
+            "displayName": "Jolt Transformation DSL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Jolt Specification": {
+            "name": "Jolt Specification",
+            "displayName": "Jolt Specification",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "a91b63bf-5f51-41af-9ba3-557910336de0",
+        "instanceIdentifier": "d1ce73e4-c0e3-40ed-b004-989c3c2266c2",
+        "name": "5B1. Insert Free Text to Trino",
+        "comments": "",
+        "position": {
+          "x": 400,
+          "y": 980
+        },
+        "type": "org.apache.nifi.processors.standard.PutDatabaseRecord",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "put-db-record-record-reader": "9e4b3aac-93f1-4f64-b9ca-ffda98dd2dc2",
+          "put-db-record-statement-type": "INSERT",
+          "put-db-record-dcbp-service": "0e52f1d4-c911-4f26-84ae-cbc9fb1b965b",
+          "put-db-record-table-name": "#{TRINO_TEXT_TABLE}",
+          "put-db-record-max-batch-size": "500"
+        },
+        "propertyDescriptors": {
+          "put-db-record-record-reader": {
+            "name": "put-db-record-record-reader",
+            "displayName": "Record Reader",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-statement-type": {
+            "name": "put-db-record-statement-type",
+            "displayName": "Statement Type",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-dcbp-service": {
+            "name": "put-db-record-dcbp-service",
+            "displayName": "Database Connection Pooling Service",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-table-name": {
+            "name": "put-db-record-table-name",
+            "displayName": "Table Name",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "put-db-record-max-batch-size": {
+            "name": "put-db-record-max-batch-size",
+            "displayName": "Maximum Batch Size",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [
+          "success"
+        ],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "367cd2c7-cfc1-42b2-a6f5-a3904c314f66",
+        "instanceIdentifier": "909d88f8-167f-4a88-ae55-2e92d9a84b23",
+        "name": "4B2. Chunk Text & Build Bulk NDJSON",
+        "comments": "",
+        "position": {
+          "x": 760,
+          "y": 780
+        },
+        "type": "org.apache.nifi.processors.groovyx.ExecuteGroovyScript",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-groovyx-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "groovyx-script-body": "import groovy.json.JsonSlurper\nimport groovy.json.JsonOutput\nimport java.nio.charset.StandardCharsets\n\ndef flowFile = session.get()\nif (!flowFile) return\n\ndef indexName = flowFile.getAttribute('css.index.name') ?: 'pdf_document_chunks'\nint chunkSize = 1500\nint overlap = 200\n\ntry {\n    def payload = null\n    session.read(flowFile, { inputStream ->\n        payload = new JsonSlurper().parse(inputStream, 'UTF-8')\n    } as org.apache.nifi.processor.io.InputStreamCallback)\n\n    def ndjson = new StringBuilder()\n    def blocks = payload?.free_text_blocks ?: []\n\n    blocks.each { block ->\n        String text = (block.text ?: '').trim()\n        if (!text) return\n        int start = 0\n        int chunkIdx = 0\n        while (start < text.length()) {\n            int end = Math.min(start + chunkSize, text.length())\n            String chunkText = text.substring(start, end)\n            def actionMeta = JsonOutput.toJson([index: [_index: indexName]])\n            def docBody = JsonOutput.toJson([\n                document_id     : payload.document_id,\n                source_filename : payload.source_filename,\n                ingest_timestamp: payload.ingest_timestamp,\n                page_number     : block.page_number,\n                section_heading : block.section_heading,\n                chunk_index     : chunkIdx,\n                chunk_text      : chunkText\n            ])\n            ndjson.append(actionMeta).append(\"\\n\").append(docBody).append(\"\\n\")\n            if (end == text.length()) break\n            start += (chunkSize - overlap)\n            chunkIdx++\n        }\n    }\n\n    flowFile = session.write(flowFile, { outputStream ->\n        outputStream.write(ndjson.toString().getBytes(StandardCharsets.UTF_8))\n    } as org.apache.nifi.processor.io.OutputStreamCallback)\n\n    flowFile = session.putAttribute(flowFile, 'mime.type', 'application/x-ndjson')\n    session.transfer(flowFile, REL_SUCCESS)\n} catch (Exception e) {\n    log.error('Failed to chunk free text blocks for Semantic Search', e)\n    session.transfer(flowFile, REL_FAILURE)\n}\n"
+        },
+        "propertyDescriptors": {
+          "groovyx-script-body": {
+            "name": "groovyx-script-body",
+            "displayName": "Script Body",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "b9c5b4b8-65b7-493b-b248-c10696ad2635",
+        "instanceIdentifier": "fcb7102f-9aec-4551-8399-02bdcec93d8f",
+        "name": "5B2. Bulk Index to Cloudera Semantic Search",
+        "comments": "",
+        "position": {
+          "x": 760,
+          "y": 980
+        },
+        "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "HTTP Method": "POST",
+          "Remote URL": "#{CSS_BULK_ENDPOINT_URL}",
+          "SSL Context Service": "7a5c5de4-df19-4582-a221-c1389eeff6e0",
+          "Content-Type": "application/x-ndjson",
+          "Send Message Body": "true",
+          "Always Output Response": "false"
+        },
+        "propertyDescriptors": {
+          "HTTP Method": {
+            "name": "HTTP Method",
+            "displayName": "HTTP Method",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Remote URL": {
+            "name": "Remote URL",
+            "displayName": "Remote URL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "SSL Context Service": {
+            "name": "SSL Context Service",
+            "displayName": "SSL Context Service",
+            "identifiesControllerService": true,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Content-Type": {
+            "name": "Content-Type",
+            "displayName": "Content-Type",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Send Message Body": {
+            "name": "Send Message Body",
+            "displayName": "Send Message Body",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Always Output Response": {
+            "name": "Always Output Response",
+            "displayName": "Always Output Response",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "style": {},
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": [
+          "Response",
+          "Original"
+        ],
+        "scheduledState": "ENABLED",
+        "retryCount": 10,
+        "retriedRelationships": [],
+        "backoffMechanism": "PENALIZE_FLOWFILE",
+        "maxBackoffPeriod": "10 mins",
+        "componentType": "PROCESSOR",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      }
+    ],
+    "inputPorts": [
+      {
+        "identifier": "4096d15e-5575-4aac-b13e-3f5c078f6d3a",
+        "instanceIdentifier": "466ab6ca-1101-4330-8624-d047e14d5f9e",
+        "name": "PDF_Documents_In",
+        "comments": "Connect upstream ListS3/FetchS3Object or GetFile processor here",
+        "position": {
+          "x": 455,
+          "y": 40
+        },
+        "type": "INPUT_PORT",
+        "concurrentlySchedulableTaskCount": 1,
+        "scheduledState": "ENABLED",
+        "allowRemoteAccess": false,
+        "componentType": "INPUT_PORT",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      }
+    ],
+    "outputPorts": [],
+    "connections": [
+      {
+        "identifier": "47c0d39f-5258-459d-b9c2-449cb11ffdeb",
+        "instanceIdentifier": "ff3fb8cd-dbfa-41fd-a0fb-a09cbb5a7657",
+        "name": "",
+        "source": {
+          "id": "4096d15e-5575-4aac-b13e-3f5c078f6d3a",
+          "type": "INPUT_PORT",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "PDF_Documents_In",
+          "comments": "",
+          "instanceIdentifier": "466ab6ca-1101-4330-8624-d047e14d5f9e"
+        },
+        "destination": {
+          "id": "dc152e1e-aeb3-453d-9b59-aea7eb22b0f9",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "1. Assign Document ID & Metadata",
+          "comments": "",
+          "instanceIdentifier": "5413f8cb-4e37-4fad-8d85-6b7835875530"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          ""
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "abc108a9-a82b-4b31-85c7-2f52a8129f2f",
+        "instanceIdentifier": "114375f9-9b71-4fa4-b0ca-7e4b7a0fea12",
+        "name": "",
+        "source": {
+          "id": "dc152e1e-aeb3-453d-9b59-aea7eb22b0f9",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "1. Assign Document ID & Metadata",
+          "comments": "",
+          "instanceIdentifier": "5413f8cb-4e37-4fad-8d85-6b7835875530"
+        },
+        "destination": {
+          "id": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "2. POST PDF to OCR Endpoint",
+          "comments": "",
+          "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "4551bc7f-17c8-4ea4-bfd8-8c896f33864d",
+        "instanceIdentifier": "0161605d-2d04-498b-acc0-ed1cc8677d58",
+        "name": "",
+        "source": {
+          "id": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "2. POST PDF to OCR Endpoint",
+          "comments": "",
+          "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf"
+        },
+        "destination": {
+          "id": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "3. Stamp Correlation Metadata",
+          "comments": "",
+          "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "Response"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "6cb9d991-7ced-4697-b736-f5f2264da951",
+        "instanceIdentifier": "dc1c0e6c-0c9c-4d99-b555-b7c324aac0d2",
+        "name": "",
+        "source": {
+          "id": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "2. POST PDF to OCR Endpoint",
+          "comments": "",
+          "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf"
+        },
+        "destination": {
+          "id": "5a5bedcb-8892-4e3d-a70b-355edb523057",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Retry OCR Requests",
+          "comments": "",
+          "instanceIdentifier": "4a47d09c-65d3-42e2-9b31-27c6afecf19b"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "Retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "ad6a114d-03cb-4965-b198-9abba50d69ab",
+        "instanceIdentifier": "64daa919-2481-4537-beb2-76ef4815a1f6",
+        "name": "",
+        "source": {
+          "id": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "2. POST PDF to OCR Endpoint",
+          "comments": "",
+          "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "Failure",
+          "No Retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "12c78896-1928-40de-8b5b-99c31bd95764",
+        "instanceIdentifier": "7508482a-68ac-46b6-b0d0-3091cf2cac5f",
+        "name": "",
+        "source": {
+          "id": "5a5bedcb-8892-4e3d-a70b-355edb523057",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Retry OCR Requests",
+          "comments": "",
+          "instanceIdentifier": "4a47d09c-65d3-42e2-9b31-27c6afecf19b"
+        },
+        "destination": {
+          "id": "8c4b0e53-5a0c-48ed-88fe-a1d51be52dd1",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "2. POST PDF to OCR Endpoint",
+          "comments": "",
+          "instanceIdentifier": "60c9f6bb-e826-4057-8701-26822b91f7cf"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "f04f39fc-8e57-4a01-84ae-1934b00599d3",
+        "instanceIdentifier": "1bc25068-4a7d-4f99-bf10-91b0fc574f01",
+        "name": "",
+        "source": {
+          "id": "5a5bedcb-8892-4e3d-a70b-355edb523057",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Retry OCR Requests",
+          "comments": "",
+          "instanceIdentifier": "4a47d09c-65d3-42e2-9b31-27c6afecf19b"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "retries_exceeded",
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "e0d56b5f-fd1b-4511-a212-c400e7a9c620",
+        "instanceIdentifier": "c787f5c5-52d7-4108-9bf5-962f0fbdeb5f",
+        "name": "Branch A: Form Fields",
+        "source": {
+          "id": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "3. Stamp Correlation Metadata",
+          "comments": "",
+          "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a"
+        },
+        "destination": {
+          "id": "ff94c6ed-0235-4650-a236-28f9712aa527",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4A. Flatten Form Fields Array",
+          "comments": "",
+          "instanceIdentifier": "ddd3afac-2fbf-415b-8e69-8b584191a9ef"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "b7fd0fc1-769d-41a4-a9ad-bff5074e5fb1",
+        "instanceIdentifier": "929a074b-361b-4b36-b549-59515e88fdd2",
+        "name": "Branch B1: Free Text (Trino)",
+        "source": {
+          "id": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "3. Stamp Correlation Metadata",
+          "comments": "",
+          "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a"
+        },
+        "destination": {
+          "id": "ace3c944-a21f-4edc-9f42-4c247260b64c",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B1. Flatten Free Text Array",
+          "comments": "",
+          "instanceIdentifier": "09731016-5efb-4e4e-9ac6-7820ca6bbfe7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "7a315b36-8d05-4198-a49c-fbf04b84ecac",
+        "instanceIdentifier": "0212794c-82a8-4e22-b1a7-f06c5150aa76",
+        "name": "Branch B2: Free Text (Semantic Search)",
+        "source": {
+          "id": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "3. Stamp Correlation Metadata",
+          "comments": "",
+          "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a"
+        },
+        "destination": {
+          "id": "367cd2c7-cfc1-42b2-a6f5-a3904c314f66",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B2. Chunk Text & Build Bulk NDJSON",
+          "comments": "",
+          "instanceIdentifier": "909d88f8-167f-4a88-ae55-2e92d9a84b23"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "6ee57ee1-3ca3-42ca-9f40-3dd6db13650f",
+        "instanceIdentifier": "8026f748-2902-4b7c-9fdd-c84c9108f4e6",
+        "name": "",
+        "source": {
+          "id": "86fbab39-47cf-46ae-a59f-dfdc0ee4bfc5",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "3. Stamp Correlation Metadata",
+          "comments": "",
+          "instanceIdentifier": "f94233b4-cd4d-433a-b0f5-e03053b09d6a"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "f624cdc7-ec7d-4722-9edf-9c4535bb7601",
+        "instanceIdentifier": "23eff67c-ceca-4a7a-a099-7c3cc93c01d1",
+        "name": "",
+        "source": {
+          "id": "ff94c6ed-0235-4650-a236-28f9712aa527",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4A. Flatten Form Fields Array",
+          "comments": "",
+          "instanceIdentifier": "ddd3afac-2fbf-415b-8e69-8b584191a9ef"
+        },
+        "destination": {
+          "id": "f8d47ff0-50f1-4b0b-bc36-b6335323917d",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5A. Insert Form Fields to Trino",
+          "comments": "",
+          "instanceIdentifier": "a4d2a770-9934-49a9-86b3-5b9cf9536d62"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "01119636-f2aa-453d-8266-4e08aa03847a",
+        "instanceIdentifier": "ebc49a4c-896e-4cfb-ac93-04f51442572f",
+        "name": "",
+        "source": {
+          "id": "ff94c6ed-0235-4650-a236-28f9712aa527",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4A. Flatten Form Fields Array",
+          "comments": "",
+          "instanceIdentifier": "ddd3afac-2fbf-415b-8e69-8b584191a9ef"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "b541bb8e-d5aa-4bf2-a908-71dbf66eaa0d",
+        "instanceIdentifier": "4a759caf-0906-473b-9735-11a8ab8b6fcb",
+        "name": "",
+        "source": {
+          "id": "f8d47ff0-50f1-4b0b-bc36-b6335323917d",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5A. Insert Form Fields to Trino",
+          "comments": "",
+          "instanceIdentifier": "a4d2a770-9934-49a9-86b3-5b9cf9536d62"
+        },
+        "destination": {
+          "id": "f8d47ff0-50f1-4b0b-bc36-b6335323917d",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5A. Insert Form Fields to Trino",
+          "comments": "",
+          "instanceIdentifier": "a4d2a770-9934-49a9-86b3-5b9cf9536d62"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "407f73d2-add5-417e-a8f1-a1338253c632",
+        "instanceIdentifier": "30f68118-05d3-4d00-a581-4e349ae47d18",
+        "name": "",
+        "source": {
+          "id": "f8d47ff0-50f1-4b0b-bc36-b6335323917d",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5A. Insert Form Fields to Trino",
+          "comments": "",
+          "instanceIdentifier": "a4d2a770-9934-49a9-86b3-5b9cf9536d62"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "a163e92a-81c7-48db-b0b2-63ab2759113d",
+        "instanceIdentifier": "2da3b19d-08c0-47ce-b426-be1f5583ec4f",
+        "name": "",
+        "source": {
+          "id": "ace3c944-a21f-4edc-9f42-4c247260b64c",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B1. Flatten Free Text Array",
+          "comments": "",
+          "instanceIdentifier": "09731016-5efb-4e4e-9ac6-7820ca6bbfe7"
+        },
+        "destination": {
+          "id": "a91b63bf-5f51-41af-9ba3-557910336de0",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B1. Insert Free Text to Trino",
+          "comments": "",
+          "instanceIdentifier": "d1ce73e4-c0e3-40ed-b004-989c3c2266c2"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "2436036a-a135-400c-a2df-dac0707905ea",
+        "instanceIdentifier": "d4c4b123-fe8b-4e6c-a270-49c335001696",
+        "name": "",
+        "source": {
+          "id": "ace3c944-a21f-4edc-9f42-4c247260b64c",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B1. Flatten Free Text Array",
+          "comments": "",
+          "instanceIdentifier": "09731016-5efb-4e4e-9ac6-7820ca6bbfe7"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "773706ec-af4d-4cc0-b5eb-254ac20f2145",
+        "instanceIdentifier": "32d01fcc-22eb-4f36-b3a5-cef0200bcc95",
+        "name": "",
+        "source": {
+          "id": "a91b63bf-5f51-41af-9ba3-557910336de0",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B1. Insert Free Text to Trino",
+          "comments": "",
+          "instanceIdentifier": "d1ce73e4-c0e3-40ed-b004-989c3c2266c2"
+        },
+        "destination": {
+          "id": "a91b63bf-5f51-41af-9ba3-557910336de0",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B1. Insert Free Text to Trino",
+          "comments": "",
+          "instanceIdentifier": "d1ce73e4-c0e3-40ed-b004-989c3c2266c2"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "a981f3e5-8d3e-4b12-85e2-401fd365f13f",
+        "instanceIdentifier": "cfba255c-12a3-4244-9ebe-97646db43d25",
+        "name": "",
+        "source": {
+          "id": "a91b63bf-5f51-41af-9ba3-557910336de0",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B1. Insert Free Text to Trino",
+          "comments": "",
+          "instanceIdentifier": "d1ce73e4-c0e3-40ed-b004-989c3c2266c2"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "0117740f-577b-4d8b-93d6-844691f01a75",
+        "instanceIdentifier": "dbf163b9-6ddf-43dc-bcbd-b82855f34615",
+        "name": "",
+        "source": {
+          "id": "367cd2c7-cfc1-42b2-a6f5-a3904c314f66",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B2. Chunk Text & Build Bulk NDJSON",
+          "comments": "",
+          "instanceIdentifier": "909d88f8-167f-4a88-ae55-2e92d9a84b23"
+        },
+        "destination": {
+          "id": "b9c5b4b8-65b7-493b-b248-c10696ad2635",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B2. Bulk Index to Cloudera Semantic Search",
+          "comments": "",
+          "instanceIdentifier": "fcb7102f-9aec-4551-8399-02bdcec93d8f"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "success"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "75df90d6-a760-42cc-835a-0dfae1768b9d",
+        "instanceIdentifier": "3949539b-d10a-45ad-8818-58cd51ae7d7b",
+        "name": "",
+        "source": {
+          "id": "367cd2c7-cfc1-42b2-a6f5-a3904c314f66",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "4B2. Chunk Text & Build Bulk NDJSON",
+          "comments": "",
+          "instanceIdentifier": "909d88f8-167f-4a88-ae55-2e92d9a84b23"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "failure"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "717d270f-f7b3-4627-b857-d9b5681fb5e9",
+        "instanceIdentifier": "7372ba55-7b41-4b66-a14b-22d7f5b84a90",
+        "name": "",
+        "source": {
+          "id": "b9c5b4b8-65b7-493b-b248-c10696ad2635",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B2. Bulk Index to Cloudera Semantic Search",
+          "comments": "",
+          "instanceIdentifier": "fcb7102f-9aec-4551-8399-02bdcec93d8f"
+        },
+        "destination": {
+          "id": "b9c5b4b8-65b7-493b-b248-c10696ad2635",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B2. Bulk Index to Cloudera Semantic Search",
+          "comments": "",
+          "instanceIdentifier": "fcb7102f-9aec-4551-8399-02bdcec93d8f"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "Retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "94045d0a-93b4-404d-9066-07039dbdd467",
+        "instanceIdentifier": "05a144be-c030-47a7-af21-688704ee5c4c",
+        "name": "",
+        "source": {
+          "id": "b9c5b4b8-65b7-493b-b248-c10696ad2635",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "5B2. Bulk Index to Cloudera Semantic Search",
+          "comments": "",
+          "instanceIdentifier": "fcb7102f-9aec-4551-8399-02bdcec93d8f"
+        },
+        "destination": {
+          "id": "a8bac03f-8e2c-4828-9095-57071ba30665",
+          "type": "PROCESSOR",
+          "groupId": "a6238006-1d18-43ee-86bd-267662a49ca2",
+          "name": "Error & Dead Letter Sink",
+          "comments": "",
+          "instanceIdentifier": "6ec07464-655e-4985-b9e0-40f7ad9a33f7"
+        },
+        "labelIndex": 1,
+        "zIndex": 0,
+        "selectedRelationships": [
+          "Failure",
+          "No Retry"
+        ],
+        "backPressureObjectThreshold": 10000,
+        "backPressureDataSizeThreshold": "1 GB",
+        "flowFileExpiration": "0 sec",
+        "prioritizers": [],
+        "bends": [],
+        "loadBalanceStrategy": "DO_NOT_LOAD_BALANCE",
+        "partitioningAttribute": "",
+        "loadBalanceCompression": "DO_NOT_COMPRESS",
+        "componentType": "CONNECTION",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      }
+    ],
+    "labels": [],
+    "funnels": [],
+    "controllerServices": [
+      {
+        "identifier": "7a5c5de4-df19-4582-a221-c1389eeff6e0",
+        "instanceIdentifier": "e914d925-0b60-4e19-b74f-eda0bdbc9203",
+        "name": "CDF_Shared_SSL_Context",
+        "comments": "Configure Truststore/Keystore for HTTPS OCR and Cloudera Semantic Search endpoints",
+        "type": "org.apache.nifi.ssl.StandardRestrictedSSLContextService",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-ssl-context-service-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "SSL Protocol": "TLS"
+        },
+        "propertyDescriptors": {
+          "SSL Protocol": {
+            "name": "SSL Protocol",
+            "displayName": "SSL Protocol",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "controllerServiceApis": [
+          {
+            "type": "org.apache.nifi.ssl.SSLContextService",
+            "bundle": {
+              "group": "org.apache.nifi",
+              "artifact": "nifi-standard-services-api-nar",
+              "version": "2.0.0"
+            }
+          }
+        ],
+        "scheduledState": "DISABLED",
+        "bulletinLevel": "WARN",
+        "componentType": "CONTROLLER_SERVICE",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "0e52f1d4-c911-4f26-84ae-cbc9fb1b965b",
+        "instanceIdentifier": "1bb6299d-b6ff-4566-ab83-5840af52229a",
+        "name": "Trino_JDBC_Connection_Pool",
+        "comments": "Cloudera Trino JDBC pool for staging table inserts",
+        "type": "org.apache.nifi.dbcp.DBCPConnectionPool",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-dbcp-service-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Database Connection URL": "#{TRINO_JDBC_URL}",
+          "Database Driver Class Name": "io.trino.jdbc.TrinoDriver",
+          "database-driver-locations": "/opt/cloudera/parcels/CDH/lib/trino/trino-jdbc.jar",
+          "Database User": "#{TRINO_USER}",
+          "Password": "#{TRINO_PASSWORD}"
+        },
+        "propertyDescriptors": {
+          "Database Connection URL": {
+            "name": "Database Connection URL",
+            "displayName": "Database Connection URL",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Database Driver Class Name": {
+            "name": "Database Driver Class Name",
+            "displayName": "Database Driver Class Name",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "database-driver-locations": {
+            "name": "database-driver-locations",
+            "displayName": "Database Driver Location(s)",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Database User": {
+            "name": "Database User",
+            "displayName": "Database User",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          },
+          "Password": {
+            "name": "Password",
+            "displayName": "Password",
+            "identifiesControllerService": false,
+            "sensitive": true,
+            "dynamic": false
+          }
+        },
+        "controllerServiceApis": [
+          {
+            "type": "org.apache.nifi.dbcp.DBCPService",
+            "bundle": {
+              "group": "org.apache.nifi",
+              "artifact": "nifi-standard-services-api-nar",
+              "version": "2.0.0"
+            }
+          }
+        ],
+        "scheduledState": "DISABLED",
+        "bulletinLevel": "WARN",
+        "componentType": "CONTROLLER_SERVICE",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      },
+      {
+        "identifier": "9e4b3aac-93f1-4f64-b9ca-ffda98dd2dc2",
+        "instanceIdentifier": "c4857491-9ca5-46d2-bbe9-6f13bf75bab9",
+        "name": "OCR_JsonTreeReader",
+        "comments": "Infers schema from flattened form_fields and free_text_blocks JSON arrays",
+        "type": "org.apache.nifi.json.JsonTreeReader",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-record-serialization-services-nar",
+          "version": "2.0.0"
+        },
+        "properties": {
+          "Schema Access Strategy": "infer-schema"
+        },
+        "propertyDescriptors": {
+          "Schema Access Strategy": {
+            "name": "Schema Access Strategy",
+            "displayName": "Schema Access Strategy",
+            "identifiesControllerService": false,
+            "sensitive": false,
+            "dynamic": false
+          }
+        },
+        "controllerServiceApis": [
+          {
+            "type": "org.apache.nifi.serialization.RecordReaderFactory",
+            "bundle": {
+              "group": "org.apache.nifi",
+              "artifact": "nifi-standard-services-api-nar",
+              "version": "2.0.0"
+            }
+          }
+        ],
+        "scheduledState": "DISABLED",
+        "bulletinLevel": "WARN",
+        "componentType": "CONTROLLER_SERVICE",
+        "groupIdentifier": "a6238006-1d18-43ee-86bd-267662a49ca2"
+      }
+    ],
+    "parameterContextName": "OCR_Trino_SemanticSearch_Params",
+    "flowFileConcurrency": "UNBOUNDED",
+    "flowFileOutboundPolicy": "STREAM_WHEN_AVAILABLE",
+    "defaultFlowFileExpiration": "0 sec",
+    "defaultBackPressureObjectThreshold": 10000,
+    "defaultBackPressureDataSizeThreshold": "1 GB",
+    "componentType": "PROCESS_GROUP"
+  },
+  "externalControllerServices": {},
+  "parameterContexts": {
+    "OCR_Trino_SemanticSearch_Params": {
+      "name": "OCR_Trino_SemanticSearch_Params",
+      "description": "Environment parameters for PDF OCR -> Trino + Cloudera Semantic Search",
+      "parameters": [
+        {
+          "name": "OCR_ENDPOINT_URL",
+          "description": "HTTPS endpoint for the OCR model",
+          "sensitive": false,
+          "provided": false,
+          "value": "https://ocr-service.example.internal/v1/extract"
+        },
+        {
+          "name": "TRINO_JDBC_URL",
+          "description": "Cloudera Trino JDBC URL targeting staging schema",
+          "sensitive": false,
+          "provided": false,
+          "value": "jdbc:trino://trino-coordinator.example.internal:8443/iceberg/staging?SSL=true"
+        },
+        {
+          "name": "TRINO_USER",
+          "description": "Service account username for Trino",
+          "sensitive": false,
+          "provided": false,
+          "value": "nifi_ingest"
+        },
+        {
+          "name": "TRINO_PASSWORD",
+          "description": "Service account password for Trino",
+          "sensitive": true,
+          "provided": false,
+          "value": null
+        },
+        {
+          "name": "TRINO_FORM_TABLE",
+          "description": "Target Trino staging table for OCR form fields",
+          "sensitive": false,
+          "provided": false,
+          "value": "ocr_form_fields"
+        },
+        {
+          "name": "TRINO_TEXT_TABLE",
+          "description": "Target Trino staging table for OCR free text",
+          "sensitive": false,
+          "provided": false,
+          "value": "ocr_free_text"
+        },
+        {
+          "name": "CSS_BULK_ENDPOINT_URL",
+          "description": "Cloudera Semantic Search _bulk URL with neural embedding pipeline",
+          "sensitive": false,
+          "provided": false,
+          "value": "https://semantic-search.example.internal:9200/_bulk?pipeline=embedding-pipeline"
+        },
+        {
+          "name": "CSS_INDEX_NAME",
+          "description": "Target index name in Cloudera Semantic Search",
+          "sensitive": false,
+          "provided": false,
+          "value": "pdf_document_chunks"
+        }
+      ],
+      "inheritedParameterContexts": [],
+      "componentType": "PARAMETER_CONTEXT"
+    }
+  },
+  "flowEncodingVersion": "1.0",
+  "parameterProviders": {},
+  "latest": false
+}
